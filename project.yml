@@ -1,0 +1,96 @@
+name: IFCQuickLook
+options:
+  bundleIdPrefix: com.ibaranov
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    ARCHS: arm64
+    ONLY_ACTIVE_ARCH: NO
+    SWIFT_VERSION: "5.10"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    # Signing: ad-hoc by default, so anyone can build without an Apple account.
+    # Real identities are passed on the xcodebuild command line by scripts/install.sh and
+    # scripts/release.sh from the git-ignored signing.local.env. Never put a team ID here.
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGN_IDENTITY: "-"
+    DEVELOPMENT_TEAM: ""
+    PROVISIONING_PROFILE_SPECIFIER: ""
+    ENABLE_HARDENED_RUNTIME: YES
+
+targets:
+  IFCQuickLook:
+    type: application
+    platform: macOS
+    sources:
+      - path: IFCQuickLook
+        excludes:
+          - "Info.plist"
+          - "*.entitlements"
+    dependencies:
+      - target: IFCPreview
+    scheme: {}
+    info:
+      path: IFCQuickLook/Info.plist
+      properties:
+        CFBundleName: IFC Quick Look
+        CFBundleDisplayName: IFC Quick Look
+        LSApplicationCategoryType: public.app-category.utilities
+        LSMinimumSystemVersion: "$(MACOSX_DEPLOYMENT_TARGET)"
+        NSHumanReadableCopyright: ""
+        UTImportedTypeDeclarations:
+          - UTTypeIdentifier: org.buildingsmart.ifc
+            UTTypeDescription: Industry Foundation Classes model
+            UTTypeConformsTo:
+              - public.data
+            UTTypeTagSpecification:
+              public.filename-extension:
+                - ifc
+              public.mime-type:
+                - application/x-step
+    entitlements:
+      path: IFCQuickLook/IFCQuickLook.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+
+  IFCPreview:
+    type: app-extension
+    platform: macOS
+    sources:
+      - path: IFCPreview
+        excludes:
+          - "Web/**"
+          - "Info.plist"
+          - "*.entitlements"
+      - path: IFCPreview/Web
+        type: folder
+        buildPhase: resources
+    info:
+      path: IFCPreview/Info.plist
+      properties:
+        CFBundleName: IFC Preview
+        CFBundleDisplayName: IFC Preview
+        LSMinimumSystemVersion: "$(MACOSX_DEPLOYMENT_TARGET)"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.quicklook.preview
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).PreviewViewController
+          NSExtensionAttributes:
+            QLSupportedContentTypes:
+              - org.buildingsmart.ifc
+            QLSupportsSearchableItems: false
+            QLIsDataBasedPreview: false
+    entitlements:
+      path: IFCPreview/IFCPreview.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.files.user-selected.read-only: true
+        com.apple.security.network.client: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ibaranov.IFCQuickLook.IFCPreview
+        SKIP_INSTALL: YES
+        GENERATE_INFOPLIST_FILE: NO

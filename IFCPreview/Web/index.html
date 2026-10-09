@@ -1,0 +1,72 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>IFC preview</title>
+<style>
+  :root {
+    --bg: #eef0f3; --fg: #1d1d1f; --muted: #6e6e73; --panel: rgba(255,255,255,.82); --accent: #0a84ff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #1c1c1e; --fg: #f2f2f7; --muted: #98989d; --panel: rgba(30,30,32,.82); }
+  }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--fg);
+    font: 12px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif; }
+  canvas#c { display: block; width: 100%; height: 100%; outline: none; }
+  #overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 10px; background: var(--bg); transition: opacity .2s; }
+  #overlay[hidden] { display: none; }
+  #overlay .spinner { width: 22px; height: 22px; border: 2px solid var(--muted); border-top-color: transparent;
+    border-radius: 50%; animation: spin .9s linear infinite; }
+  #overlay.error .spinner { display: none; }
+  #overlay .title { font-size: 14px; font-weight: 600; }
+  #overlay .detail { color: var(--muted); max-width: 70%; text-align: center; white-space: pre-wrap; }
+  #overlay.error .title { color: #ff453a; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #hud { position: absolute; left: 10px; bottom: 10px; padding: 5px 9px; border-radius: 7px;
+    background: var(--panel); color: var(--fg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 1px 3px rgba(0,0,0,.15); pointer-events: none; display: flex; gap: 12px; }
+  #hud[hidden] { display: none; }
+  #hud span { color: var(--muted); }
+  #hud b { font-weight: 600; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="overlay"><div class="spinner"></div><div class="title">Loading…</div><div class="detail"></div></div>
+<div id="hud" hidden></div>
+<script>
+// Classic script, so it runs even when the module graph below fails to load. A missing file
+// under vendor/ aborts viewer.js before any of its own handlers are installed, which would
+// otherwise leave the panel on its spinner with nothing reported to the host.
+(function () {
+  var reported = false;
+  function report(detail) {
+    if (reported) return;
+    reported = true;
+    var o = document.getElementById('overlay');
+    if (o) {
+      o.hidden = false;
+      o.classList.add('error');
+      o.querySelector('.title').textContent = 'Cannot load the viewer';
+      o.querySelector('.detail').textContent = detail;
+    }
+    try {
+      window.webkit.messageHandlers.host.postMessage({ type: 'error', message: 'viewer failed to load: ' + detail });
+    } catch (e) { /* not in WKWebView */ }
+  }
+  window.__ifcReportLoadFailure = report;
+  // Resource errors do not bubble, so listen in the capture phase.
+  window.addEventListener('error', function (e) {
+    if (e.target && e.target !== window && e.target.tagName === 'SCRIPT') {
+      report('The 3D libraries are missing or unreadable. Run scripts/fetch-vendor.sh and rebuild.');
+    }
+  }, true);
+})();
+</script>
+<script type="module" src="./viewer.js"
+        onerror="window.__ifcReportLoadFailure('viewer.js could not be loaded.')"></script>
+</body>
+</html>

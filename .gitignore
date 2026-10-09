@@ -1,0 +1,10 @@
+*.xcodeproj/
+build/
+DerivedData/
+vendor/.tmp/
+IFCPreview/Web/vendor/
+IFCPreview/Web/model.ifc
+.DS_Store
+dist/
+signing.local.env
+.claude/settings.local.json
