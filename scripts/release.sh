@@ -22,7 +22,7 @@ rm -rf "$BUILT" dist
 mkdir -p dist
 xcodebuild -project "${APP_NAME}.xcodeproj" -scheme "$APP_NAME" -configuration Release -derivedDataPath build SYMROOT="$ROOT/build/Build/Products" \
   CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY="Developer ID Application" DEVELOPMENT_TEAM="$TEAM_ID" \
-  ENABLE_HARDENED_RUNTIME=YES OTHER_CODE_SIGN_FLAGS="--timestamp" build -quiet
+  ENABLE_HARDENED_RUNTIME=YES CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO OTHER_CODE_SIGN_FLAGS="--timestamp" build -quiet
 codesign --verify --deep --strict --verbose=2 "$BUILT"
 
 echo "== notarize"
